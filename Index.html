@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Valentine ❤️</title>
+    <style>
+        :root {
+            --heart-red: #ff4d6d;
+            --gold-glow: #fff176;
+            --overlay: rgba(0, 0, 0, 0.45);
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .screen {
+            display: none;
+            width: 100%; height: 100vh;
+            background-size: cover; background-position: center;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; color: white; position: relative;
+            transition: background-image 0.4s ease-in-out;
+        }
+
+        .active { display: flex; animation: fadeIn 0.8s ease-in-out; }
+
+        #screen1 { background-image: linear-gradient(var(--overlay), var(--overlay)), url('21017.jpg'); }
+        #screen2 { background-image: linear-gradient(var(--overlay), var(--overlay)), url('21026.jpg'); }
+        #screen3 { background-image: linear-gradient(var(--overlay), var(--overlay)), url('21015.jpg'); }
+
+        h1 { font-size: 2.8rem; text-shadow: 2px 2px 15px rgba(0,0,0,0.7); padding: 0 20px; }
+
+        .btn-group { display: flex; gap: 40px; align-items: center; justify-content: center; height: 120px; width: 100%; position: relative; }
+        button { padding: 14px 35px; font-size: 1rem; font-weight: bold; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.4); transition: transform 0.2s; }
+        button:hover { transform: scale(1.05); }
+
+        #yesBtn { background-color: var(--heart-red); color: white; font-size: 1.3rem; }
+        #noBtn { background-color: white; color: var(--heart-red); position: relative; z-index: 1000; }
+        
+        .controls { display: flex; gap: 12px; margin-top: 25px; flex-wrap: wrap; justify-content: center; z-index: 10; }
+        
+        #playSongBtn { background-color: #ffd700; color: #333; display: none; }
+        #pauseBtn { background-color: rgba(255,255,255,0.2); color: white; border: 1px solid white; display: none; }
+        #refreshBtn { background-color: white; color: #333; display: none; }
+        #exitBtn { background-color: #444; color: white; display: none; }
+
+        #heartContainer { font-size: 130px; cursor: pointer; user-select: none; animation: pulse 1.5s infinite; -webkit-tap-highlight-color: transparent; }
+        .holding { transform: scale(1.4) !important; animation: none !important; }
+        .progress-container { width: 280px; height: 16px; background: rgba(255, 255, 255, 0.2); border-radius: 20px; border: 2px solid white; margin-top: 40px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background-color: var(--heart-red); transition: width 0.1s linear; }
+
+        .reveal-msg {
+            color: var(--gold-glow);
+            font-size: 2rem; font-weight: bold;
+            opacity: 0; transform: translateY(20px);
+            text-shadow: 0 0 20px rgba(255, 241, 118, 0.5);
+            margin: 10px 0; display: none;
+        }
+
+        .animate-up { display: block !important; animation: riseFade 1s forwards; }
+        .confetti { position: absolute; width: 10px; height: 10px; z-index: 2000; animation: fall 3s linear forwards; }
+        #youtube-player { position: absolute; top: -9999px; left: -9999px; visibility: hidden; }
+
+        @keyframes riseFade { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="youtube-player"></div>
+
+    <div id="screen1" class="screen active">
+        <h1 id="mainTitle">Will you be my Valentine? ❤️</h1>
+        <div class="btn-group">
+            <button id="yesBtn" onclick="nextScreen(2)">Yes 💖</button>
+            <button id="noBtn" onmouseover="handleNo()" onclick="handleNo()">No 🐻</button>
+        </div>
+    </div>
+
+    <div id="screen2" class="screen">
+        <h1>Then hold my heart️</h1>
+        <div id="heartContainer" onmousedown="startHold()" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold()" ontouchend="stopHold()">❤️</div>
+        <div class="progress-container"><div id="progressBar" class="progress-bar"></div></div>
+    </div>
+
+    <div id="screen3" class="screen">
+        <div id="msg1" class="reveal-msg">You officially unlocked my heart! ✨</div>
+        <div id="msg2" class="reveal-msg">(And you're stuck with me now) 🔒</div>
+        <div id="msg3" class="reveal-msg" style="color: white;">Love you! ❤️</div>
+        
+        <h1 id="finalWish" style="display: none; font-size: 3.2rem; color: var(--heart-red); margin-top: 20px;">Happy Valentine's Day!</h1>
+        <p id="hashtag" style="display: none; font-size: 2.2rem; font-weight: bold;">#KSForever 💖</p>
+        
+        <div class="controls">
+            <button id="playSongBtn" onclick="playSong()">Loading Song...</button>
+            <button id="pauseBtn" onclick="togglePause()">Pause ⏸️</button>
+            <button id="refreshBtn" onclick="refreshSession()">Restart ✨</button>
+            <button id="exitBtn" onclick="handleExit()">Exit 👋</button>
+        </div>
+    </div>
+
+    <script>
+        let player;
+        let isPlayerReady = false;
+        let isPaused = false;
+        let clickCount = 0;
+        const maxClicks = 15;
+        const holdDuration = 3000;
+
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '0', width: '0',
+                videoId: '0hq3DrAJY_c',
+                playerVars: { 'autoplay': 0, 'controls': 0, 'start': 15 },
+                events: { 'onReady': onPlayerReady }
+            });
+        }
+
+        function onPlayerReady() {
+            isPlayerReady = true;
+            document.getElementById('playSongBtn').innerText = "Play Our Song 🎵";
+        }
+
+        function playSong() {
+            if (isPlayerReady) {
+                player.unMute();
+                player.playVideo();
+                document.getElementById('playSongBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+            }
+        }
+
+        function togglePause() {
+            const btn = document.getElementById('pauseBtn');
+            if (!isPaused) {
+                player.pauseVideo();
+                btn.innerText = "Play ▶️";
+                isPaused = true;
+            } else {
+                player.playVideo();
+                btn.innerText = "Pause ⏸️";
+                isPaused = false;
+            }
+        }
+
+        function handleExit() {
+            if(confirm("Wait! You haven't hugged me yet! 🥺 Are you sure you want to leave?")) {
+                alert("Fine, but you're still my Valentine! ❤️");
+                refreshSession();
+            }
+        }
+
+        function refreshSession() {
+            // --- FULL SONG RESET ---
+            if (player) {
+                player.pauseVideo();
+                player.seekTo(15); // Force it back to 00:15
+                player.stopVideo(); // Kill process
+                player.mute();      // Just in case
+            }
+            
+            clickCount = 0;
+            isPaused = false;
+            
+            // RESET ALL MESSAGE CLASSES
+            const messages = [document.getElementById('msg1'), document.getElementById('msg2'), document.getElementById('msg3')];
+            messages.forEach(m => {
+                m.classList.remove('animate-up');
+                m.style.display = 'none';
+                m.style.opacity = '0';
+            });
+
+            document.getElementById('finalWish').style.display = 'none';
+            document.getElementById('hashtag').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('refreshBtn').style.display = 'none';
+            document.getElementById('exitBtn').style.display = 'none';
+            document.getElementById('playSongBtn').style.display = 'none';
+            document.getElementById('playSongBtn').innerText = isPlayerReady ? "Play Our Song 🎵" : "Loading Song...";
+            document.getElementById('pauseBtn').innerText = "Pause ⏸️";
+            
+            document.getElementById('noBtn').style.display = 'inline-block';
+            document.getElementById('noBtn').style.position = 'relative';
+            document.getElementById('noBtn').style.left = 'auto';
+            document.getElementById('noBtn').style.top = 'auto';
+            document.getElementById('mainTitle').innerText = "Will you be my Valentine? ❤️";
+            document.getElementById('screen1').style.backgroundImage = "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('21017.jpg')";
+            
+            nextScreen(1);
+        }
+
+        function nextScreen(num) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen' + num).classList.add('active');
+            if(num === 3) startFinale();
+        }
+
+        function handleNo() {
+            clickCount++;
+            const noBtn = document.getElementById('noBtn');
+            const screen1 = document.getElementById('screen1');
+            if (clickCount <= maxClicks) {
+                screen1.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('${clickCount}.jpg')`;
+            }
+            if (clickCount >= maxClicks) {
+                noBtn.style.display = 'none';
+                document.getElementById('mainTitle').innerText = "Okay, now you have to say Yes! 💖";
+                return;
+            }
+            const yesBtn = document.getElementById('yesBtn');
+            const yesRect = yesBtn.getBoundingClientRect();
+            let newX, newY, badPosition = true;
+            while (badPosition) {
+                newX = Math.random() * (window.innerWidth - noBtn.offsetWidth - 100) + 50;
+                newY = Math.random() * (window.innerHeight - noBtn.offsetHeight - 100) + 50;
+                const buffer = 80;
+                if (!(newX < yesRect.right + buffer && newX + noBtn.offsetWidth > yesRect.left - buffer && newY < yesRect.bottom + buffer && newY + noBtn.offsetHeight > yesRect.top - buffer)) badPosition = false;
+            }
+            noBtn.style.position = 'fixed'; noBtn.style.left = newX + 'px'; noBtn.style.top = newY + 'px';
+        }
+
+        let holdTimer;
+        function startHold() {
+            const bar = document.getElementById('progressBar');
+            document.getElementById('heartContainer').classList.add('holding');
+            const startTime = Date.now();
+            holdTimer = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                let prog = (elapsed / holdDuration) * 100;
+                bar.style.width = Math.min(prog, 100) + '%';
+                if (prog >= 100) { clearInterval(holdTimer); nextScreen(3); }
+            }, 20);
+        }
+
+        function stopHold() {
+            document.getElementById('heartContainer').classList.remove('holding');
+            clearInterval(holdTimer);
+            document.getElementById('progressBar').style.width = '0%';
+        }
+
+        function startFinale() {
+            document.querySelectorAll('.confetti').forEach(c => c.remove());
+            
+            for (let i = 0; i < 80; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.backgroundColor = ['#ff4d6d', '#ffd700', '#ffffff'][Math.floor(Math.random() * 3)];
+                c.style.animationDelay = Math.random() * 2 + 's';
+                document.body.appendChild(c);
+            }
+
+            setTimeout(() => document.getElementById('msg1').classList.add('animate-up'), 500);
+            setTimeout(() => document.getElementById('msg2').classList.add('animate-up'), 1500);
+            setTimeout(() => document.getElementById('msg3').classList.add('animate-up'), 2500);
+            setTimeout(() => {
+                document.getElementById('finalWish').style.display = 'block';
+                document.getElementById('hashtag').style.display = 'block';
+                document.getElementById('playSongBtn').style.display = 'inline-block';
+                document.getElementById('refreshBtn').style.display = 'inline-block';
+                document.getElementById('exitBtn').style.display = 'inline-block';
+            }, 3800);
+        }
+    </script>
+</body>
+</html>
