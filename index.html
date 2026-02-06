@@ -214,8 +214,8 @@
             const screen1 = document.getElementById('screen1');
             if (clickCount <= maxClicks) {
                 console.log(clickCount)
-                console.log(clickCount+'.jpg')
-                screen1.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('${clickCount}.jpg')`;
+                console.log(clickCount==11?10,clickCount+ '.jpg')
+                screen1.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('${clickCount==11?10,clickCount}.jpg')`;
             }
             if (clickCount >= maxClicks) {
                 noBtn.style.display = 'none';
